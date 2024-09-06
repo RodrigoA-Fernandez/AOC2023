@@ -8,17 +8,12 @@ struct Partida {
 }
 
 impl Partida {
-    pub fn new(path: &Path) -> Result<Self, String> {
+    pub fn new(path: &Path) -> Result<Self, ()> {
         let contenido = fs::read_to_string(path).expect("No se ha podido leer la entrada");
-        let manos: Vec<Mano> = vec![];
+        let mut manos: Vec<Mano> = vec![];
 
         for linea in contenido.lines() {
-            let info: Vec<&str> = linea.split(" ").collect();
-            if info.len() != 2 || info[0].len() != 5 {
-                return Err(String::from("Formato de archivo incorrecto."));
-            }
-
-            for c in info[0].chars() {}
+            manos.push(Mano::new(linea)?);
         }
 
         Ok(Partida { manos })
@@ -130,8 +125,8 @@ impl TryFrom<char> for Carta {
     }
 }
 
-impl PartialOrd for Carta {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+impl Ord for Carta {
+    fn cmp(&self, other: &Self) -> Ordering {
         let other_num: u8 = match other {
             Carta::Int(u) => *u,
             Carta::T => 10,
@@ -150,12 +145,12 @@ impl PartialOrd for Carta {
             Carta::A => 14,
         };
 
-        u8::partial_cmp(&self_num, &other_num)
+        u8::cmp(&self_num, &other_num)
     }
 }
 
-impl Ord for Carta {
-    fn cmp(&self, other: &Self) -> Ordering {
-        Carta::partial_cmp(&self, other).expect("No se como narices has llegado aqui.")
+impl PartialOrd for Carta {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(Carta::cmp(self, other))
     }
 }
