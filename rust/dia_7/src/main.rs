@@ -1,6 +1,20 @@
-use std::{cmp::Ordering, fs, path::Path};
+use std::{cmp::Ordering, fmt::Display, fs, path::Path};
 
-fn main() {}
+fn main() {
+    ej1()
+}
+
+fn ej1() {
+    let mut partida = Partida::new(Path::new("./input/input")).expect("Datos incorrectos.");
+    partida.manos.sort();
+    for l in partida.manos {
+        let mut s = "".to_string();
+        for c in l.cartas {
+            s.push_str(&c.to_string());
+        }
+        println!("{}: {}. {}", s, l.apuesta, l.tipo);
+    }
+}
 
 #[derive(Debug)]
 struct Partida {
@@ -20,7 +34,7 @@ impl Partida {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct Mano {
     cartas: Vec<Carta>,
     tipo: TipoMano,
@@ -76,18 +90,63 @@ impl Mano {
     }
 }
 
-#[derive(Debug)]
-enum TipoMano {
-    FiveOfAKind,
-    FourOfAKind,
-    Full,
-    ThreeOfAKind,
-    TwoPair,
-    OnePair,
-    HighCard,
+impl Ord for Mano {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.tipo != other.tipo {
+            return isize::cmp(&(self.tipo as isize), &(other.tipo as isize));
+        };
+
+        let mut cartas_self = self.cartas.clone();
+        let mut cartas_other = other.cartas.clone();
+
+        cartas_self.sort();
+        cartas_other.sort();
+
+        for c1 in &cartas_self {
+            for c2 in &cartas_other {
+                if *c1 != *c2 {
+                    return Carta::cmp(c1, c2);
+                }
+            }
+        }
+
+        Ordering::Equal
+    }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+impl PartialOrd for Mano {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(Self::cmp(self, other))
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+enum TipoMano {
+    FiveOfAKind = 6,
+    FourOfAKind = 5,
+    Full = 4,
+    ThreeOfAKind = 3,
+    TwoPair = 2,
+    OnePair = 1,
+    HighCard = 0,
+}
+
+impl Display for TipoMano {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            TipoMano::FiveOfAKind => "FiveOfAKind",
+            TipoMano::FourOfAKind => "FourOfAKind",
+            TipoMano::Full => "Full",
+            TipoMano::ThreeOfAKind => "ThreeOfAKind",
+            TipoMano::TwoPair => "TwoPair",
+            TipoMano::OnePair => "OnePair",
+            TipoMano::HighCard => "HighCard",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 enum Carta {
     Int(u8),
     T,
@@ -103,14 +162,14 @@ impl TryFrom<char> for Carta {
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value.to_digit(10) {
             Some(i) => match i {
-                2 => Ok(Carta::Int(1)),
-                3 => Ok(Carta::Int(1)),
-                4 => Ok(Carta::Int(1)),
-                5 => Ok(Carta::Int(1)),
-                6 => Ok(Carta::Int(1)),
-                7 => Ok(Carta::Int(1)),
-                8 => Ok(Carta::Int(1)),
-                9 => Ok(Carta::Int(1)),
+                2 => Ok(Carta::Int(2)),
+                3 => Ok(Carta::Int(3)),
+                4 => Ok(Carta::Int(4)),
+                5 => Ok(Carta::Int(5)),
+                6 => Ok(Carta::Int(6)),
+                7 => Ok(Carta::Int(7)),
+                8 => Ok(Carta::Int(8)),
+                9 => Ok(Carta::Int(9)),
                 _ => Err(()),
             },
             None => match value {
@@ -152,5 +211,19 @@ impl Ord for Carta {
 impl PartialOrd for Carta {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(Carta::cmp(self, other))
+    }
+}
+
+impl Display for Carta {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match *self {
+            Carta::Int(u) => &u.to_string(),
+            Carta::T => "T",
+            Carta::J => "J",
+            Carta::Q => "Q",
+            Carta::K => "K",
+            Carta::A => "A",
+        };
+        write!(f, "{}", s)
     }
 }
